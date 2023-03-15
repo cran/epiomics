@@ -98,14 +98,23 @@ owas_mixed_effects <- compiler::cmpfun(
     }  
     # Check if all omics features are in the data
     if(FALSE %in% (omics %in% colnames(df))){ 
-      stop("Not all omics variables are found in the data:
-           Check omics column names.")  
+      stop("Not all omics vars are in the data. Check omics column names.")  
     }    
     # Check if covars are in data
     if(FALSE %in% (covars %in% colnames(df))){ 
-      stop("Not all covariates are found in the data:
-           Check covariate column names.") 
+      stop("Not all covariates are in the data. Check covariate column names.") 
+    } 
+    ## Check that var is specified
+    if(!(var_exposure_or_outcome %in% c("exposure", "outcome"))){ 
+      stop(
+        "var_exposure_or_outcome must be either \"exposure\" or \"outcome\" "
+      )
     }
+    ## Check that family is specified
+    if(!(family %in% c("gaussian", "binomial"))){ 
+      stop("family must be either \"gaussian\" or \"binomial\" ")
+    }
+    
     # Check if random effects are in data
     random_effect_vars_all <- gsub("\\|", ",", x = random_effects) |> 
       strsplit("\\,\\s|\\,|\\s") |> 
@@ -178,11 +187,7 @@ owas_mixed_effects <- compiler::cmpfun(
           as.formula()
       }
       
-    } else {
-      stop(
-        "var_exposure_or_outcome must be either \"exposure\" or \"outcome\" ")
-    }
-    
+    } 
     
     # Run models -------------------------
     ## If no confidence intervals are requested: -----------------
@@ -231,9 +236,7 @@ owas_mixed_effects <- compiler::cmpfun(
                                ftr_var_group ~ V2,
                                value.var = "V1")[,c(1, 2, 4, 5, 3)]
         
-      } else {
-        stop("family must be either \"gaussian\" or \"binomial\" ")
-      }
+      } 
       
     } else if(conf_int){
       ## If confidence intervals are requested: --------------------
@@ -289,9 +292,7 @@ owas_mixed_effects <- compiler::cmpfun(
                                ftr_var_group ~ V2,
                                value.var = "V1")[,c(1, 4, 6, 7, 5, 3, 2)]
         
-      } else {
-        stop("family must be either \"gaussian\" or \"binomial\" ")
-      }
+      } 
     }
     
     # Separate ftr_var_group back to ftr name and var name ------------

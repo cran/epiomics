@@ -9,6 +9,11 @@ test_that("owas_qgcomp works", {
     grep("feature_",
          colnames(example_data))][1:10]
   
+  # Get names of categorical omics
+  colnames_cat_out <- colnames(example_data)[
+   grep("disease",
+   colnames(example_data))][1]
+  
   # Names of exposures in mixture
   exposure_names <- c("exposure1", "exposure2", "exposure3")
   
@@ -20,7 +25,7 @@ test_that("owas_qgcomp works", {
                      confidence_level = 0.95)
   
   
-  # Run analysis with covariates
+  # Continuous omics, with covars ----
   out <- owas_qgcomp(df = example_data,
                      expnms = c("exposure1", "exposure2", "exposure3"),
                      covars = c("weight", "age", "sex"),
@@ -30,11 +35,33 @@ test_that("owas_qgcomp works", {
   
   # Test that function returns expected dimensions
   testthat::expect_equal(object = ncol(out), 
-                         expected = 11)
+                         expected = 12)
   testthat::expect_equal(object = nrow(out), 
                          expected = length(colnames_omic_fts))
   
+  
+  # Categorical omics, with covars ----
+  out_boot <- owas_qgcomp(df = example_data,
+                     expnms = c("exposure1", "exposure2", "exposure3"),
+                     covars = c("weight", "age", "sex"),
+                     omics = colnames_cat_out,
+                     q = 4,
+                     confidence_level = 0.95, 
+                     family = "binomial", 
+                     run.qgcomp.boot = TRUE)
+  
+  out_noboot <- owas_qgcomp(df = example_data,
+                     expnms = c("exposure1", "exposure2", "exposure3"),
+                     covars = c("weight", "age", "sex"),
+                     omics = colnames_cat_out,
+                     q = 4,
+                     confidence_level = 0.95, 
+                     family = "binomial", 
+                     run.qgcomp.boot = FALSE)
+  
 })
+
+
 
 
 
@@ -130,4 +157,21 @@ testthat::test_that("owas_qgcomp errors", {
       "Not all covars are found in the data. Check covar column names."
   ) 
   
-})
+  ## family must be gaussian or binomial  ----
+  error_message <- testthat::capture_error(
+    owas_qgcomp(df = example_data,
+                expnms = c("exposure1"),
+                omics = c(colnames_omic_fts),
+                family = "other",
+                q = 4)
+  )
+  
+  # Test error in data
+  testthat::expect_equal(
+    object = error_message$message, 
+    expected = 
+      "family must be either \"gaussian\" or \"binomial\" "
+  ) 
+  
+
+  })

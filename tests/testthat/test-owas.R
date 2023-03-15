@@ -1,5 +1,5 @@
 
-# Test that owas works with multiple outcomes ----------------
+# owas with multiple outcomes ----------------
 test_that("owas works with multiple traits", {
   # Load Example Data
   data("example_data")
@@ -53,7 +53,7 @@ test_that("owas works with multiple traits", {
   
 })
 
-# Test that owas works with single outcome ----------------
+# owas with single outcome ----------------
 test_that("owas works with single continuous outcome", {
   # Load Example Data
   data("example_data")
@@ -69,26 +69,28 @@ test_that("owas works with single continuous outcome", {
                         omics = colnames_omic_fts,
                         covars = c("age", "sex"),
                         var_exposure_or_outcome = "exposure",
-                        family = "gaussian")
+                        family = "gaussian", 
+                        conf_int = TRUE)
   
   # Test that function returns expected dimensions
   testthat::expect_equal(object = ncol(cont_owas_out), 
-                         expected = 8)
+                         expected = 10)
   testthat::expect_equal(object = nrow(cont_owas_out), 
                          expected = 5)
   
   # Run function with dichotomous outcome as the variable of interest
   owas(df = example_data,
        var = "disease1",
-       omics = colnames_omic_fts,
+       omics = colnames_omic_fts[1],
        covars = c("age", "sex"),
        var_exposure_or_outcome = "outcome",
-       family = "binomial")
+       family = "binomial", 
+       conf_int = TRUE)
   
   # Run function with dichotomous exposure as the variable of interest
   owas(df = example_data,
        var = "exposure4",
-       omics = colnames_omic_fts,
+       omics = colnames_omic_fts[1],
        covars = c("age", "sex"),
        var_exposure_or_outcome = "outcome",
        ref_group = c("low"),
@@ -99,7 +101,7 @@ test_that("owas works with single continuous outcome", {
 
 
 
-# Test that owas gives correct errors ----------------
+# owas gives correct errors ----------------
 test_that("owas gives correct errors", {
   # Load Example Data
   data("example_data")
@@ -197,7 +199,7 @@ test_that("owas gives correct errors", {
       "Not all omics vars are found in the data. Check omics column names."
   )
   
-  ## Not all covars  are found in the data ----
+  ## Not all covars are found in the data ----
   error_message <- testthat::capture_error(
     owas(df = example_data,
          var = c(disease_names[1:2]),
@@ -215,7 +217,37 @@ test_that("owas gives correct errors", {
       "Not all covars are found in the data. Check covar column names."
   ) 
   
+  ## Check that var_exposure_or_outcome is specified  ----
+  error_message <- testthat::capture_error(
+    owas(df = example_data,
+         var = c("exposure1"),
+         omics = colnames_omic_fts,
+         covars = c("age", "sex"),
+         var_exposure_or_outcome = "other",
+         family = "gaussian", 
+         ref_group = "healthy")
+  )
   
+  # Test error in data
+  testthat::expect_equal(
+    object = error_message$message, 
+    expected = 'var_exposure_or_outcome must be either "exposure" or "outcome" ')
+  
+  ## Check that family is specified  ----
+  error_message <- testthat::capture_error(
+    owas(df = example_data,
+         var = c("exposure1"),
+         omics = colnames_omic_fts,
+         covars = c("age", "sex"),
+         var_exposure_or_outcome = "exposure",
+         family = "test", 
+         ref_group = "healthy")
+  )
+  
+  # Test error in data
+  testthat::expect_equal(
+    object = error_message$message, 
+    expected = 'family must be either "gaussian" or "binomial" ')
   
   
 })

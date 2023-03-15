@@ -6,7 +6,7 @@
 \alias{epiomics-package}
 \title{epiomics: Analysis of Omics Data in Observational Studies}
 \description{
-A collection of fast and flexible functions for analyzing omics data in observational studies. Multiple different approaches for integrating environmental/genetic factors, omics data, and/or phenotype data are implemented. This includes functions for performing omics wide association studies with one or more variables of interest as the exposure or outcome; a function for performing a meet in the middle analysis for linking exposures, omics, and outcomes (as described by Chadeau-Hyam et al., (2010) \doi{10.3109/1354750X.2010.533285}); and a function for performing a mixtures analysis across all omics features using quantile-based g-Computation (as described by Keil et al., (2019) \doi{10.1289/EHP5838}).
+A collection of fast and flexible functions for analyzing omics data in observational studies. Multiple different approaches for integrating multiple environmental/genetic factors, omics data, and/or phenotype data are implemented. This includes functions for performing omics wide association studies with one or more variables of interest as the exposure or outcome; a function for performing a meet in the middle analysis for linking exposures, omics, and outcomes (as described by Chadeau-Hyam et al., (2010) \doi{10.3109/1354750X.2010.533285}); and a function for performing a mixtures analysis across all omics features using quantile-based g-Computation (as described by Keil et al., (2019) \doi{10.1289/EHP5838}).
 }
 \author{
 \strong{Maintainer}: Jesse Goodrich \email{jagoodri@usc.edu} (\href{https://orcid.org/0000-0001-6615-0472}{ORCID})

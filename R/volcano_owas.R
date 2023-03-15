@@ -49,7 +49,7 @@ volcano_owas <- compiler::cmpfun(
     estimate <- p_value <- ftr_names_label <- adjusted_pval <- NULL
     # Annotated feature names
     df$ftr_names_label <- ifelse(df$p_value < annotation_p_threshold, 
-                                 df$feature_name, "")
+                                 as.character(df$feature_name), "")
     
     # Make plot
     main_plot <- ggplot(df, 

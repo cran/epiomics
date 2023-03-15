@@ -38,7 +38,7 @@
 #' estimate: the model estimate for the feature. For linear models, this is the 
 #' beta; for logistic models, this is the log odds. 
 #' se: Standard error of the estimate
-#' test statistic: t-value
+#' test_statistic: t-value
 #' p_value: p-value for the estimate
 #' adjusted_pval: FDR adjusted p-value
 #' threshold: Marginal significance, based on unadjusted p-values 
@@ -282,9 +282,7 @@ owas <- compiler::cmpfun(
                                ftr_var_group ~ V2, 
                                value.var = "V1")[,c(1, 4, 6, 7, 5, 3, 2)]
         
-      } else {
-        stop("family must be either \"gaussian\" or \"binomial\" ")
-      }
+      } 
     }
     
     # Separate ftr_var_group back to ftr name and var name ------------
