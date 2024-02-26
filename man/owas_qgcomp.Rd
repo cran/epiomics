@@ -37,7 +37,7 @@ g-computation).}
 (defaults to 0.95, or an alpha of 0.05)}
 
 \item{family}{Currently only "gaussian" (default) for linear models (via lm)
-or "binomial" for logistic. Defualt is "gaussian".}
+or "binomial" for logistic. Default is "gaussian".}
 
 \item{rr}{see \code{qgcomp()}}
 

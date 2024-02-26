@@ -19,8 +19,8 @@ test_that("volcano_owas works with a single var", {
   
   vp <- volcano_owas(owas_out)
   
-  testthat::expect_equal(object = length(vp), 
-                         expected = 9)
+  testthat::expect_equal(object = vp$data$threshold, 
+                         expected = c("Significant", rep("Non-significant", 4)))
   
 })
 
@@ -51,7 +51,8 @@ test_that("volcano_owas works with multiple vars", {
   vp <- volcano_owas(owas_multiple_vars, 
                      highlight_adj_p = FALSE)
   
-  testthat::expect_equal(object = length(vp), 
-                         expected = 9)
+  testthat::expect_equal(object = vp$data$threshold, 
+                         expected = c("Significant", 
+                                      rep("Non-significant", 14)))
  
 })

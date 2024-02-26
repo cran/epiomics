@@ -25,7 +25,7 @@
 #'  conditional likelihood or one of the approximations. Default is "efron". 
 #'  Passed to \code{clogit}.
 #' 
-#' @returns 
+#' @return
 #' A data frame with 6 columns:  
 #' feature_name: name of the omics feature   
 #' estimate: the model estimate for the feature. For linear models, this is the 

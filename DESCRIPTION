@@ -1,6 +1,6 @@
 Package: epiomics
 Title: Analysis of Omics Data in Observational Studies
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: 
     person("Jesse", "Goodrich", , "jagoodri@usc.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-6615-0472"))
@@ -18,16 +18,15 @@ Description: A collection of fast and flexible functions for analyzing
     <doi:10.1289/EHP5838>).
 License: GPL (>= 3)
 Depends: R (>= 3.5.0)
-Imports: data.table, ggplot2, ggrepel, lme4, lmerTest, qgcomp, stats,
-        survival
+Imports: data.table, ggplot2, ggrepel, qgcomp, stats, survival
 Suggests: covr, testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
 NeedsCompilation: no
-Packaged: 2023-03-15 20:21:28 UTC; jagoodri
+Packaged: 2024-02-26 05:11:19 UTC; jagoodri
 Author: Jesse Goodrich [aut, cre] (<https://orcid.org/0000-0001-6615-0472>)
 Maintainer: Jesse Goodrich <jagoodri@usc.edu>
 Repository: CRAN
-Date/Publication: 2023-03-15 20:40:02 UTC
+Date/Publication: 2024-02-26 05:30:02 UTC

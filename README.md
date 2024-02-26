@@ -2,8 +2,8 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/JAGoodrich/epiomics/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/JAGoodrich/epiomics/actions/workflows/R-CMD-check.yaml)
-[![Codecov test coverage](https://codecov.io/gh/JAGoodrich/epiomics/branch/main/graph/badge.svg)](https://app.codecov.io/gh/JAGoodrich/epiomics?branch=main)
+[![R-CMD-check](https://github.com/Goodrich-Lab/epiomics/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Goodrich-Lab/epiomics/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/Goodrich-Lab/epiomics/branch/main/graph/badge.svg)](https://app.codecov.io/gh/Goodrich-Lab/epiomics?branch=main)
 <!-- badges: end -->
 
 **epiomics** provides a collection of fast and flexible functions for the analysis of omics data in observational studies.
@@ -20,7 +20,7 @@ You can download the developmental version of epiomics from [GitHub](https://git
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("JAGoodrich/epiomics")
+devtools::install_github("Goodrich-Lab/epiomics")
 
 library(epiomics)
 ```

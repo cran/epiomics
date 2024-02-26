@@ -17,7 +17,7 @@
 #' which features will be highlighted. Defaults to 0.05.
 #' @param horizontal_line_p_value Set the p-value for the horizontal line 
 #' for the threshold of significance. 
-#' @returns 
+#' @return
 #' A ggplot figure
 #' 
 #' @examples 

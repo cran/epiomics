@@ -23,13 +23,13 @@
 #' @param confidence_level Confidence level for marginal significance 
 #' (defaults to 0.95, or an alpha of 0.05)
 #' @param family Currently only "gaussian" (default) for linear models (via lm) 
-#' or "binomial" for logistic. Defualt is "gaussian".
+#' or "binomial" for logistic. Default is "gaussian".
 #' @param rr see \code{qgcomp()}
 #' @param run.qgcomp.boot Should the model be fit with qgcomp.boot? See 
 #' package \link[qgcomp]{qgcomp.boot} for details. Default is TRUE. 
 #' Setting to FALSE decreases computational time.  
 #' 
-#' @returns 
+#' @return
 #' A data frame with the following columns:  
 #' feature: name of the omics feature   
 #' psi: the model estimate for the feature. For linear models, this is the 

@@ -27,7 +27,7 @@
 #' @param ref_group_outcome Reference category if the outcome is a
 #' character or factor.  If not, can leave empty. 
 #' 
-#' @returns 
+#' @return 
 #' A list of three dataframes, containing: 
 #' 1) Results from the Exposure-Omics Wide Association Study  
 #' 2) Results from the Omics-Outcome Wide Association Study

@@ -1,3 +1,8 @@
+# epiomics 1.1.0
+
+* Added coef_plot_from_owas() to plot the output of an owas analysis. 
+* Fixed bugs
+
 # epiomics 1.0.0
 
 * Major updates and added additional functionality to owas_qgcomp.R function, 
