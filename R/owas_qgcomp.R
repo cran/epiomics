@@ -7,7 +7,7 @@
 #' continuous or dichotomous outcomes, and provides the option to adjust for 
 #' covariates. 
 #' @import data.table qgcomp
-#' @importFrom stats binomial gaussian coef glm lm p.adjust  
+#' @importFrom stats binomial gaussian coef glm lm p.adjust var
 #' @export 
 #' @param df Dataset
 #' @param expnms Name of the exposures. Can be either continuous or 
@@ -28,6 +28,9 @@
 #' @param run.qgcomp.boot Should the model be fit with qgcomp.boot? See 
 #' package \link[qgcomp]{qgcomp.boot} for details. Default is TRUE. 
 #' Setting to FALSE decreases computational time.  
+#' @param test_data_quality If TRUE (default), then code will ensure that 
+#' the variance of all variables in the analysis is greater than 0 after 
+#' dropping any missing data.
 #' 
 #' @return
 #' A data frame with the following columns:  
@@ -70,161 +73,183 @@
 #'                    q = 4, 
 #'                    confidence_level = 0.95) 
 #'  
-owas_qgcomp <- compiler::cmpfun(
-  function(df, 
-           expnms,
-           omics, 
-           covars = NULL,
-           q = 4, 
-           confidence_level = 0.95, 
-           family = "gaussian", 
-           rr = TRUE, 
-           run.qgcomp.boot = TRUE){
+owas_qgcomp <- function(df, 
+                        expnms,
+                        omics, 
+                        covars = NULL,
+                        q = 4, 
+                        confidence_level = 0.95, 
+                        family = "gaussian", 
+                        rr = TRUE, 
+                        run.qgcomp.boot = TRUE, 
+                        test_data_quality = TRUE){
+  
+  alpha <- 1-confidence_level
+  # Get var variable types
+  var_types <- df[,(colnames(df) %in% expnms)] |>
+    lapply(function(x)class(x)) |> unlist() |> unique()
+  
+  ## Check if variable of interest is in data ----
+  if(FALSE %in% (expnms %in% colnames(df))){ 
+    stop(paste0("Variable '", 
+                paste0(expnms[!(expnms %in% colnames(df))],
+                       collapse = ", "),
+                "' not found in data. Check data.") ) 
+  }    
+  ## Check if var has different types ----
+  if(length(var_types) > 1){ 
+    stop("All variables in \'expnms\' must be the same type")  
+  }   
+  ## Check if var is numeric or character/factor with max 2 levels ----
+  if((var_types == "character" | var_types == "factor")){ 
+    stop("Currently exposures must be numeric, consider reformatting")  
+  }
+  ## Check if all omics features are in the data ----
+  if(FALSE %in% (omics %in% colnames(df))){ 
+    stop(
+      "Not all omics vars are found in the data. Check omics column names.")  
+  }    
+  ## Check if covars are in data ----
+  if(FALSE %in% (covars %in% colnames(df))){ 
+    stop(
+      "Not all covars are found in the data. Check covar column names."
+    ) 
+  }    
+  ## Check that family is specified ----
+  if(!(family %in% c("gaussian", "binomial"))){ 
+    stop("family must be either \"gaussian\" or \"binomial\" ")
+  }
+  
+  # Set family
+  if(family == "gaussian"){family_type = gaussian()}
+  if(family == "binomial"){family_type = binomial()}
+  
+  
+  # Change data frame to data table for speed
+  df <- data.table(df)
+  
+  # Test whether any variables have a variance of zero -------
+  if(test_data_quality == TRUE){
+    # Drop rows with any missing values in the selected columns
+    df_complete <- df[complete.cases(df[, c(expnms, omics, covars), with = FALSE]), 
+                      c(expnms, omics, covars), with = FALSE]
     
-    alpha <- 1-confidence_level
-    # Get var variable types
-    var_types <- df[,(colnames(df) %in% expnms)] |>
-      lapply(function(x)class(x)) |> unlist() |> unique()
+    # For any non-numeric variables, turn them into factors then numeric
+    var_unique_summary <- df_complete[, lapply(.SD, function(x) {
+      if (is.numeric(x)) var(x, na.rm = TRUE) else (length(unique(x))-1)
+    }), .SDcols = c(expnms, omics, covars)]
     
-    ## Check if variable of interest is in data ----
-    if(FALSE %in% (expnms %in% colnames(df))){ 
-      stop(paste0("Variable '", 
-                  paste0(expnms[!(expnms %in% colnames(df))],
-                         collapse = ", "),
-                  "' not found in data. Check data.") ) 
-    }    
-    ## Check if var has different types ----
-    if(length(var_types) > 1){ 
-      stop("All variables in \'expnms\' must be the same type")  
-    }   
-    ## Check if var is numeric or character/factor with max 2 levels ----
-    if((var_types == "character" | var_types == "factor")){ 
-      stop("Currently exposures must be numeric, consider reformatting")  
+    var_unique_summary <- as.matrix(var_unique_summary==0)
+    # Check which variables have exactly zero variance
+    zero_var_vars <- colnames(var_unique_summary)[var_unique_summary != 0]
+    
+    if(length(zero_var_vars) > 0){
+      stop(paste0("The following variables have zero variance for complete cases: ", 
+                  paste(zero_var_vars, collapse = ", "), 
+                  ". Please remove before analysis."))
     }
-    ## Check if all omics features are in the data ----
-    if(FALSE %in% (omics %in% colnames(df))){ 
-      stop(
-        "Not all omics vars are found in the data. Check omics column names.")  
-    }    
-    ## Check if covars are in data ----
-    if(FALSE %in% (covars %in% colnames(df))){ 
-      stop(
-        "Not all covars are found in the data. Check covar column names."
-      ) 
-    }    
-    ## Check that family is specified ----
-    if(!(family %in% c("gaussian", "binomial"))){ 
-      stop("family must be either \"gaussian\" or \"binomial\" ")
-    }
-    
-    # Set family
-    if(family == "gaussian"){family_type = gaussian()}
-    if(family == "binomial"){family_type = binomial()}
-    
-    
-    # Change data frame to data table for speed
-    df <- data.table(df)
-    
-    # Pivot longer  
-    dt_l <- melt.data.table(
-      df,
-      id.vars = c(expnms, covars),
-      measure.vars = omics,
-      variable.name = "feature_name",
-      value.name = "feature_value"
-    )
-    
-    # Run models -------------------------
-    # Split to list
-    dt_list <- split(dt_l, f = dt_l$feature_name)
-    
-    # Run qgcomp noboot
-    if(run.qgcomp.boot){
-      res <- lapply(dt_list, 
-                    FUN = function(x){ 
-                      dt_l <- x[,c(colnames(x) %in% 
-                                     c(expnms, "feature_value", covars)),
-                                with = FALSE]
-                      fit <- qgcomp::qgcomp(feature_value~.,
-                                            expnms = expnms, 
-                                            q = q,
-                                            alpha = 0.05,
-                                            data = dt_l, 
-                                            family = family_type, 
-                                            rr = rr)
-                      # Get names of coefficients
-                      names(fit$fit$coefficients) <-  paste0(
-                        "coef_", 
-                        names(fit$fit$coefficients))
-                      # Get statistic names
-                      stat_name <- names(fit)[grep("stat", names(fit))]
-                      c(psi            = as.numeric(fit$coef[2]),
-                        lcl_psi        = as.numeric(fit$ci[1]),
-                        ucl_psi        = as.numeric(fit$ci[2]),
-                        test_statistic = as.numeric(fit[[stat_name]][2]),
-                        p_value        = as.numeric(fit$pval[2]), 
-                        fit$fit$coefficients[-1])
-                      
-                    })
-    } else {
-      res <- lapply(dt_list, 
-                    FUN = function(x){ 
-                      dt_l <- x[,c(colnames(x) %in% 
-                                     c(expnms, "feature_value", covars)),
-                                with = FALSE]
-                      fit <- qgcomp::qgcomp.noboot(feature_value~.,
-                                            expnms = expnms, 
-                                            q = q,
-                                            alpha = 0.05,
-                                            data = dt_l, 
-                                            family = family_type)
-                      # Get names of coefficients
-                      names(fit$fit$coefficients) <-  paste0(
-                        "coef_", 
-                        names(fit$fit$coefficients))
-                      # Get statistic names
-                      stat_name <- names(fit)[grep("stat", names(fit))]
-                      c(psi            = as.numeric(fit$coef[2]),
-                        lcl_psi        = as.numeric(fit$ci[1]),
-                        ucl_psi        = as.numeric(fit$ci[2]),
-                        test_statistic = as.numeric(fit[[stat_name]][2]),
-                        p_value        = as.numeric(fit$pval[2]), 
-                        fit$fit$coefficients[-1])
-                    })
-      
-    }
-    
-    # Add column for estimate
-    res_2 <- t(as.data.frame(res))
-    res_2 <- as.data.frame(res_2)
-    res_2$feature <- rownames(res_2)
-    rownames(res_2) <- NULL
-    
-    # Calculate adjusted p value
-    res_2$adjusted_pval <- p.adjust(res_2$p_value, method = "fdr")
-    
-    res_2$threshold <- ifelse(res_2$adjusted_pval < alpha,
-                              "Significant",
-                              "Non-significant")
-    
-    # Reorder (select feature then all other cols)
-    final_results <- res_2[
-      c("feature", "psi", 
-        "lcl_psi", "ucl_psi", 
-        "p_value", "test_statistic",
-        "adjusted_pval", "threshold", 
-        paste0("coef_", expnms))
-    ]
-    
-    # Add column for covariates
-    if(is.null(covars)){
-      final_results$covariates <- "None"
-    } else {
-      final_results$covariates <- paste0(covars, collapse = ", ")
-    }
-    
-    return(final_results)
+  }
+  
+  # Modify Data table -----------
+  # Pivot longer  
+  dt_l <- melt.data.table(
+    df,
+    id.vars = c(expnms, covars),
+    measure.vars = omics,
+    variable.name = "feature_name",
+    value.name = "feature_value"
+  )
+  
+  # Run models -------------------------
+  # Split to list
+  dt_list <- split(dt_l, f = dt_l$feature_name)
+  
+  # Run qgcomp noboot
+  if(run.qgcomp.boot){
+    res <- lapply(dt_list, 
+                  FUN = function(x){ 
+                    dt_l <- x[,c(colnames(x) %in% 
+                                   c(expnms, "feature_value", covars)),
+                              with = FALSE]
+                    fit <- qgcomp::qgcomp(feature_value~.,
+                                          expnms = expnms, 
+                                          q = q,
+                                          alpha = 0.05,
+                                          data = dt_l, 
+                                          family = family_type, 
+                                          rr = rr)
+                    # Get names of coefficients
+                    names(fit$fit$coefficients) <-  paste0(
+                      "coef_", 
+                      names(fit$fit$coefficients))
+                    # Get statistic names
+                    stat_name <- names(fit)[grep("stat", names(fit))]
+                    c(psi            = as.numeric(fit$coef[2]),
+                      lcl_psi        = as.numeric(fit$ci[1]),
+                      ucl_psi        = as.numeric(fit$ci[2]),
+                      test_statistic = as.numeric(fit[[stat_name]][2]),
+                      p_value        = as.numeric(fit$pval[2]), 
+                      fit$fit$coefficients[-1])
+                    
+                  })
+  } else {
+    res <- lapply(dt_list, 
+                  FUN = function(x){ 
+                    dt_l <- x[,c(colnames(x) %in% 
+                                   c(expnms, "feature_value", covars)),
+                              with = FALSE]
+                    fit <- qgcomp::qgcomp.noboot(feature_value~.,
+                                                 expnms = expnms, 
+                                                 q = q,
+                                                 alpha = 0.05,
+                                                 data = dt_l, 
+                                                 family = family_type)
+                    # Get names of coefficients
+                    names(fit$fit$coefficients) <-  paste0(
+                      "coef_", 
+                      names(fit$fit$coefficients))
+                    # Get statistic names
+                    stat_name <- names(fit)[grep("stat", names(fit))]
+                    c(psi            = as.numeric(fit$coef[2]),
+                      lcl_psi        = as.numeric(fit$ci[1]),
+                      ucl_psi        = as.numeric(fit$ci[2]),
+                      test_statistic = as.numeric(fit[[stat_name]][2]),
+                      p_value        = as.numeric(fit$pval[2]), 
+                      fit$fit$coefficients[-1])
+                  })
     
   }
   
-)
+  # Add column for estimate
+  res_2 <- t(as.data.frame(res))
+  res_2 <- as.data.frame(res_2)
+  res_2$feature <- rownames(res_2)
+  rownames(res_2) <- NULL
+  
+  # Calculate adjusted p value
+  res_2$adjusted_pval <- p.adjust(res_2$p_value, method = "fdr")
+  
+  res_2$threshold <- ifelse(res_2$adjusted_pval < alpha,
+                            "Significant",
+                            "Non-significant")
+  
+  # Reorder (select feature then all other cols)
+  final_results <- res_2[
+    c("feature", "psi", 
+      "lcl_psi", "ucl_psi", 
+      "p_value", "test_statistic",
+      "adjusted_pval", "threshold", 
+      paste0("coef_", expnms))
+  ]
+  
+  # Add column for covariates
+  if(is.null(covars)){
+    final_results$covariates <- "None"
+  } else {
+    final_results$covariates <- paste0(covars, collapse = ", ")
+  }
+  
+  return(final_results)
+  
+}
+

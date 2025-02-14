@@ -1,3 +1,8 @@
+# epiomics 1.2.0
+
+* Added robust omics data quality checks to the owas functions. 
+* Minor bug fixes
+
 # epiomics 1.1.0
 
 * Added coef_plot_from_owas() to plot the output of an owas analysis. 

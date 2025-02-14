@@ -13,7 +13,8 @@ owas_qgcomp(
   confidence_level = 0.95,
   family = "gaussian",
   rr = TRUE,
-  run.qgcomp.boot = TRUE
+  run.qgcomp.boot = TRUE,
+  test_data_quality = TRUE
 )
 }
 \arguments{
@@ -44,6 +45,10 @@ or "binomial" for logistic. Default is "gaussian".}
 \item{run.qgcomp.boot}{Should the model be fit with qgcomp.boot? See
 package \link[qgcomp]{qgcomp.boot} for details. Default is TRUE.
 Setting to FALSE decreases computational time.}
+
+\item{test_data_quality}{If TRUE (default), then code will ensure that
+the variance of all variables in the analysis is greater than 0 after
+dropping any missing data.}
 }
 \value{
 A data frame with the following columns:

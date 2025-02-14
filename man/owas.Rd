@@ -13,7 +13,8 @@ owas(
   family = "gaussian",
   confidence_level = 0.95,
   conf_int = FALSE,
-  ref_group = NULL
+  ref_group = NULL,
+  test_data_quality = TRUE
 )
 }
 \arguments{
@@ -46,6 +47,10 @@ calculates Wald confidence intervals via \code{confint.default}.}
 
 \item{ref_group}{Reference category if the variable of interest is a
 character or factor. If not, can leave empty.}
+
+\item{test_data_quality}{If TRUE (default), then code will ensure that
+the variance of all variables in the analysis is greater than 0 after
+dropping any missing data.}
 }
 \value{
 A data frame with 6 columns:

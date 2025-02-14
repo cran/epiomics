@@ -58,11 +58,11 @@ test_that("owas_mixed_effects works", {
   
   # Test continuous analysis
   ### Run single model ---------------
-  fit <- lmerTest::lmer(feature_V1 ~  cc_status + (1|case_control_set), 
-                        data = example_data, REML = TRUE) |>
-    summary() |> 
-    coef()
-  
+  # fit <- lmerTest::lmer(feature_V1 ~  cc_status + (1|case_control_set), 
+  #                       data = example_data, REML = TRUE) |>
+  #   summary() |> 
+  #   coef()
+
   
   res_manual <- fit[nrow(fit),] |> t() |> as.data.frame()
   
@@ -89,11 +89,11 @@ test_that("owas_mixed_effects works", {
     conf_int = TRUE)
   
   ### Run single model ---------------
-  fit <- lme4::glmer(disease1 ~ feature_V1 + (1| case_control_set), 
-                     data = example_data, 
-                     family = binomial(link = "logit")) |>
-    summary() |> 
-    coef()
+  # fit <- lme4::glmer(disease1 ~ feature_V1 + (1| case_control_set), 
+  #                    data = example_data, 
+  #                    family = binomial(link = "logit")) |>
+  #   summary() |> 
+  #   coef()
   
   res_manual <- fit[nrow(fit),] |> t() |> as.data.frame()
   

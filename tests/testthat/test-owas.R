@@ -251,3 +251,39 @@ test_that("owas gives correct errors", {
   
   
 })
+
+
+# owas when there is 0 var in an omic feature ----------------
+test_that("owas gives error when an omic feature has no variance", {
+  # Load Example Data
+  data("example_data")
+  
+  # Get names of omics
+  colnames_omic_fts <- colnames(example_data)[
+    grep("feature_",
+         colnames(example_data))][1:2]
+  
+  # Set variable with variance of 0
+  example_data$one <- 1
+  
+  colnames_omic_fts <- c(colnames_omic_fts, "one")
+  
+  # Check that owas gives an error when the variance is 1
+  error_message <- testthat::capture_error(
+    owas(df = example_data,
+         var = "exposure1",
+         omics = colnames_omic_fts,
+         covars = c("age", "sex"),
+         var_exposure_or_outcome = "exposure",
+         family = "gaussian", 
+         conf_int = FALSE)
+  )
+  
+  # Test error in data
+  testthat::expect_equal(
+    object = error_message$message, 
+    expected = 'The following variables have zero variance for complete cases: one. Please remove before analysis.')
+  
+  
+  
+})

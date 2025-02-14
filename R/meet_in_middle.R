@@ -73,87 +73,85 @@
 #'                       omics = colnames_omic_fts,
 #'                       outcome_family = "gaussian")
 #' 
-meet_in_middle <- compiler::cmpfun(
-  function(df, 
-           exposure,
-           outcome,
-           omics,
-           covars = NULL,
-           outcome_family = "gaussian",
-           confidence_level = 0.95, 
-           conf_int = FALSE, 
-           ref_group_exposure = NULL, 
-           ref_group_outcome = NULL){
-    alpha <- 1-confidence_level
+meet_in_middle <- function(df, 
+                           exposure,
+                           outcome,
+                           omics,
+                           covars = NULL,
+                           outcome_family = "gaussian",
+                           confidence_level = 0.95, 
+                           conf_int = FALSE, 
+                           ref_group_exposure = NULL, 
+                           ref_group_outcome = NULL){
+  alpha <- 1-confidence_level
+  
+  # Check if more than one exposure
+  if((length(exposure)+length(outcome))>2){ 
+    stop("More than one exposure or outcome is not currently supported.") 
+  }   
+  
+  
+  df <- data.table::as.data.table(df)
+  # exposure_omics_owas
+  exposure_omics_owas <- epiomics::owas(df = df,
+                                        var = exposure, 
+                                        omics = omics, 
+                                        covars = covars,
+                                        var_exposure_or_outcome = "exposure", 
+                                        family = "gaussian",
+                                        confidence_level = confidence_level, 
+                                        conf_int = conf_int, 
+                                        ref_group = ref_group_exposure)
+  
+  # omics_outcome_owas
+  omics_outcome_owas <- epiomics::owas(df = df,
+                                       var = outcome, 
+                                       omics = omics,
+                                       covars = covars,
+                                       var_exposure_or_outcome = "outcome", 
+                                       family = outcome_family,
+                                       confidence_level = confidence_level, 
+                                       conf_int = conf_int, 
+                                       ref_group = ref_group_outcome)
+  
+  
+  # Find overlap
+  x_o_fts <- exposure_omics_owas[
+    exposure_omics_owas$p_value<alpha,]$feature_name
+  o_y_fts <- omics_outcome_owas[
+    omics_outcome_owas$p_value<alpha,]$feature_name
+  overlap_fts <- intersect(x_o_fts, o_y_fts)
+  
+  # Create overlapping data frame
+  if(length(overlap_fts)>0){
+    # Subset only overlapping sig
+    # Exposure-feature
+    x_o <- exposure_omics_owas[
+      exposure_omics_owas$feature_name %in% overlap_fts,]
+    colnames(x_o) <- c("exposure_name", 
+                       paste0(colnames(x_o)[-1],
+                              c("",rep("_exp_omic", ncol(x_o)-2))))
+    # feature-outcome
+    o_y <- omics_outcome_owas[
+      omics_outcome_owas$feature_name %in% overlap_fts,]
+    colnames(o_y) <- c("outcome_name", 
+                       paste0(colnames(o_y)[-1],
+                              c("",rep("_omic_out", ncol(o_y)-2))))
     
-    # Check if more than one exposure
-    if((length(exposure)+length(outcome))>2){ 
-      stop("More than one exposure or outcome is not currently supported.") 
-    }   
+    # Merge
+    overlap <- merge(x_o, o_y, by = c("feature_name")) 
+    # Reorder
+    first_cols <- c("exposure_name", "outcome_name", "feature_name")
+    overlap <- overlap[,c(first_cols, 
+                          setdiff(colnames(overlap), first_cols))]
     
     
-    df <- data.table::as.data.table(df)
-    # exposure_omics_owas
-    exposure_omics_owas <- epiomics::owas(df = df,
-                                          var = exposure, 
-                                          omics = omics, 
-                                          covars = covars,
-                                          var_exposure_or_outcome = "exposure", 
-                                          family = "gaussian",
-                                          confidence_level = confidence_level, 
-                                          conf_int = conf_int, 
-                                          ref_group = ref_group_exposure)
-    
-    # omics_outcome_owas
-    omics_outcome_owas <- epiomics::owas(df = df,
-                                         var = outcome, 
-                                         omics = omics,
-                                         covars = covars,
-                                         var_exposure_or_outcome = "outcome", 
-                                         family = outcome_family,
-                                         confidence_level = confidence_level, 
-                                         conf_int = conf_int, 
-                                         ref_group = ref_group_outcome)
-    
-    
-    # Find overlap
-    x_o_fts <- exposure_omics_owas[
-      exposure_omics_owas$p_value<alpha,]$feature_name
-    o_y_fts <- omics_outcome_owas[
-      omics_outcome_owas$p_value<alpha,]$feature_name
-    overlap_fts <- intersect(x_o_fts, o_y_fts)
-    
-    # Create overlapping data frame
-    if(length(overlap_fts)>0){
-      # Subset only overlapping sig
-      # Exposure-feature
-      x_o <- exposure_omics_owas[
-        exposure_omics_owas$feature_name %in% overlap_fts,]
-      colnames(x_o) <- c("exposure_name", 
-                         paste0(colnames(x_o)[-1],
-                                c("",rep("_exp_omic", ncol(x_o)-2))))
-      # feature-outcome
-      o_y <- omics_outcome_owas[
-        omics_outcome_owas$feature_name %in% overlap_fts,]
-      colnames(o_y) <- c("outcome_name", 
-                         paste0(colnames(o_y)[-1],
-                                c("",rep("_omic_out", ncol(o_y)-2))))
-      
-      # Merge
-      overlap <- merge(x_o, o_y, by = c("feature_name")) 
-      # Reorder
-      first_cols <- c("exposure_name", "outcome_name", "feature_name")
-      overlap <- overlap[,c(first_cols, 
-                            setdiff(colnames(overlap), first_cols))]
-      
-      
-    } else {overlap <- NULL}
-    
-    final_results <- list(exposure_omics_owas = exposure_omics_owas, 
-                          omics_outcome_owas = omics_outcome_owas, 
-                          overlap = overlap)
-    
-    return(final_results)
-    
-  }
-)
+  } else {overlap <- NULL}
+  
+  final_results <- list(exposure_omics_owas = exposure_omics_owas, 
+                        omics_outcome_owas = omics_outcome_owas, 
+                        overlap = overlap)
+  
+  return(final_results)
+  
+}

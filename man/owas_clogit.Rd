@@ -12,7 +12,8 @@ owas_clogit(
   covars = NULL,
   confidence_level = 0.95,
   conf_int = FALSE,
-  method = "efron"
+  method = "efron",
+  test_data_quality = TRUE
 )
 }
 \arguments{
@@ -39,6 +40,10 @@ calculates Wald confidence intervals via \code{confint.default}.}
 \item{method}{method used the correct (exact) calculation in the
 conditional likelihood or one of the approximations. Default is "efron".
 Passed to \code{clogit}.}
+
+\item{test_data_quality}{If TRUE (default), then code will ensure that
+the variance of all variables in the analysis is greater than 0 after
+dropping any missing data.}
 }
 \value{
 A data frame with 6 columns:
